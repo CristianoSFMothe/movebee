@@ -7,22 +7,25 @@ describe('<ZipFinder />', () => {
 
   beforeEach(() => {
     cy.mount(<ZipFinder />)
+
+    cy.viewport(1200, 768)
+
     cy.get('[data-cy=inputCep]').as('inputCep')
     cy.get('[data-cy=submitCep]').as('submitCep')
   });
 
-  const address = {
-    street: 'Rua Joaquim Floriano',
-    district: 'Itaim Bibi',
-    city: 'São Paulo/SP',
-    zipCode: '04534-011'
-  }
-  it('deve buscar um CEP na área de cobertura', () => {
+  it.only('deve buscar um CEP na área de cobertura', () => {
+    const address = {
+      street: 'Rua Joaquim Floriano',
+      district: 'Itaim Bibi',
+      city: 'São Paulo/SP',
+      zipCode: '04534-011'
+    }
 
 
     cy.get('@inputCep').type(address.zipCode)
 
-    cy.get('[data-cy=submitCep]').click()
+    cy.get('@submitCep').click()
 
     cy.get('[data-cy=street]').should('have.text', address.street)
     cy.get('[data-cy=district]').should('have.text', address.district)
@@ -35,5 +38,36 @@ describe('<ZipFinder />', () => {
     cy.get('@submitCep').click()
 
     cy.get('#swal2-title').should('have.text', 'Preencha algum CEP')
+    cy.get('.swal2-confirm').should('be.visible')
+    cy.get('.swal2-confirm').click()
+  })
+
+  it('CEP inválido', () => {
+    const address = {
+      zipCode: '0000000',
+    }
+
+
+    cy.get('@inputCep').type(address.zipCode)
+
+    cy.get('@submitCep').click()
+
+    cy.get('[data-cy="notice"]').should('be.visible')
+    cy.get('[data-cy="notice"]').should('have.text', 'CEP no formato inválido.')
+  })
+
+
+  it('CEP fora da área de cobertura', () => {
+    const address = {
+      zipCode: '06150000',
+    }
+
+
+    cy.get('@inputCep').type(address.zipCode)
+
+    cy.get('@submitCep').click()
+
+    cy.get('[data-cy="notice"]').should('be.visible')
+    cy.get('[data-cy="notice"]').should('have.text', 'No momento não atendemos essa região.')
   })
 })
