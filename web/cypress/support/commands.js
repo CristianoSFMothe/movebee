@@ -1,25 +1,26 @@
-// ***********************************************
-// This example commands.js shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+/* eslint-disable no-undef */
+Cypress.Commands.add('zipFinder', (address, mock = false) => {
+
+  if (mock) {
+    cy.intercept({
+      method: 'GET',
+      url: '/zipcode/*'
+    }, {
+      statusCode: 200,
+      body: {
+        cep: address.zipCode,
+        logradouro: address.street,
+        bairro: address.district,
+        cidade_uf: address.city,
+      }
+    }).as('getZipCode')
+  }
+
+  cy.get('@inputCep').type(address.zipCode)
+  cy.get('@submitCep').click({ force: true })
+
+  if (mock) {
+    cy.wait('@getZipCode')
+  }
+
+});
