@@ -14,7 +14,7 @@ describe('<ZipFinder />', () => {
     cy.get('[data-cy=submitCep]').as('submitCep')
   });
 
-  it.only('deve buscar um CEP na área de cobertura', () => {
+  it('deve buscar um CEP na área de cobertura', () => {
     const address = {
       street: 'Rua Joaquim Floriano',
       district: 'Itaim Bibi',
@@ -22,10 +22,7 @@ describe('<ZipFinder />', () => {
       zipCode: '04534-011'
     }
 
-
-    cy.get('@inputCep').type(address.zipCode)
-
-    cy.get('@submitCep').click()
+    cy.zipFinder(address, true)
 
     cy.get('[data-cy=street]').should('have.text', address.street)
     cy.get('[data-cy=district]').should('have.text', address.district)
@@ -47,21 +44,16 @@ describe('<ZipFinder />', () => {
       zipCode: '0000000',
     }
 
-
-    cy.get('@inputCep').type(address.zipCode)
-
-    cy.get('@submitCep').click()
+    cy.zipFinder(address)
 
     cy.get('[data-cy="notice"]').should('be.visible')
     cy.get('[data-cy="notice"]').should('have.text', 'CEP no formato inválido.')
   })
 
-
   it('CEP fora da área de cobertura', () => {
     const address = {
       zipCode: '06150000',
     }
-
 
     cy.get('@inputCep').type(address.zipCode)
 
@@ -71,3 +63,29 @@ describe('<ZipFinder />', () => {
     cy.get('[data-cy="notice"]').should('have.text', 'No momento não atendemos essa região.')
   })
 })
+
+Cypress.Commands.add('zipFinder', (address, mock = false) => {
+
+  if (mock) {
+    cy.intercept({
+      method: 'GET',
+      url: '/zipcode/*'
+    }, {
+      statusCode: 200,
+      body: {
+        cep: address.zipCode,
+        logradouro: address.street,
+        bairro: address.district,
+        cidade_uf: address.city,
+      }
+    }).as('getZipCode')
+  }
+
+  cy.get('@inputCep').type(address.zipCode)
+  cy.get('@submitCep').click({ force: true })
+
+  if (mock) {
+    cy.wait('@getZipCode')
+  }
+
+});
